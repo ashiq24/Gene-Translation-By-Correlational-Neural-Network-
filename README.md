@@ -1,1 +1,2 @@
-# Gene-Translation-By-Correlational-Neural-Network-
+# Gene-Translation-By-Correlational-Neural-Network-( On going work)
+Gene expression analysis is very common in research of  bioinformatics.The aim of this research is to predict the gene expressions of very inaccessible tissue ( brain , heart) from easily accessible tissue ( blood, skin).  Huge number of genes and scarcity of data is a major challenge to use Deep learning in this problem. To tackle this, we used a novel data synthesis method using copula theory. And used correlational  neural network to map the relation between gene expressions of different tissues.
