@@ -62,8 +62,11 @@ class DATA():
 class Copula():
     def __init__(self,data):
         self.data = np.array(data)
+        if(len(data)<2):
+            raise  Exception('input data must have multiple samples')
+
         self.cov = np.cov(self.data.T)
-        self.normal = stats.multivariate_normal([0 for i in range(len(data[0]))], self.cov)
+        self.normal = stats.multivariate_normal([0 for i in range(len(data[0]))], self.cov,allow_singular=True)
         self.norm = stats.norm()
         self.var = []
         self.cdfs = []
@@ -81,28 +84,7 @@ class Copula():
         self.cdfs = self.norm.cdf(self.var)
         data = [ [ np.percentile(self.data[:,j],100*i[j]) for j in range(len(i))] for i in self.cdfs ]
         return data
-def test_copula_2():
-    Data = RealData('/media/ashiq/Education/Research/DeepSavior/DATA Base/gtex6/gtex-adipose-skin/original/Data/')
-    lc,rc = Data.get_data()
-    data = np.concatenate([lc,rc],axis=1)
-    cop = Copula(data)
-    cov_mat = cop.cov
-    num=len(lc)
-    pdata = cop.gendata(num)
-    npdata = np.array(pdata)
-    cop_cov = np.cov(npdata.T)
-    fig, ax = plt.subplots(figsize=(20, 20),nrows=1, ncols=2)
-    ax[0].imshow(cov_mat, cmap='binary', interpolation='nearest')
-    ax[1].imshow(cop_cov, cmap='binary', interpolation='nearest')
-    ax[0].set_title('real cov')
-    ax[1].set_title('copula cov')
-    fig.savefig('copula_test.png')
 
-    from metric import Test
-
-    t = Test([],[],[],[],[],[],data,[],[])
-    
-    t.gengraph(data, pdata,'data','gen_data')
 
 class transform():
     def __init__(self,num):
@@ -172,12 +154,9 @@ class RealData():
     def load(self):
         data = pd.read_csv(self.path+'exps_CommonLeft.csv')
         data = data.drop(columns=['Unnamed: 0'])
-
         self.Cleft = data.values
-        
         data = pd.read_csv(self.path+'exps_commonRight.csv')
         data = data.drop(columns=['Unnamed: 0'])
-
         self.Cright = data.values
 
         '''mer_data = np.concatenate([self.Cleft,self.Cright],axis=1)
@@ -196,12 +175,32 @@ class RealData():
     def get_data(self,):
         self.load()
         tnum = int(len(self.Cleft)*0.8)
-        return self.Cleft, self.Cright
-        #tcl,tcr = self.Common.fit_get_both(self.Cleft[:tnum],self.Cright[:tnum])
-        #tcl,tcr = self.Common.get_both(self.Cleft,self.Cright) 
-        #return tcl.tolist(),tcr.tolist()
+        tcl,tcr = self.Common.fit_get_both(self.Cleft[:tnum],self.Cright[:tnum])
+        tcl,tcr = self.Common.get_both(self.Cleft,self.Cright) 
+        return tcl.tolist(),tcr.tolist()
     
+def test_copula_2():
+    Data = RealData('/media/ashiq/Education/Research/DeepSavior/DATA Base/gtex6/gtex-adipose-skin/original/Data/')
+    lc,rc = Data.get_data()
+    data = np.concatenate([lc,rc],axis=1)
+    cop = Copula(data)
+    cov_mat = cop.cov
+    num=len(lc)
+    pdata = cop.gendata(num)
+    npdata = np.array(pdata)
+    cop_cov = np.cov(npdata.T)
+    fig, ax = plt.subplots(figsize=(20, 20),nrows=1, ncols=2)
+    ax[0].imshow(cov_mat, cmap='binary', interpolation='nearest')
+    ax[1].imshow(cop_cov, cmap='binary', interpolation='nearest')
+    ax[0].set_title('real cov')
+    ax[1].set_title('copula cov')
+    fig.savefig('copula_test.png')
 
+    from metric import Test
+
+    t = Test([],[],[],[],[],[],data,[],[])
+    
+    t.gengraph(data, pdata,'data','gen_data')
 #test_copula_2()
 '''data = [
     [1,2,3],

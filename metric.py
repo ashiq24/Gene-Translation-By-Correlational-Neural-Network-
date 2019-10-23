@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from scipy.stats import gaussian_kde, spearmanr, pearsonr, ks_2samp
 import matplotlib.backends.backend_pdf as mpdf
 import pickle
@@ -260,7 +259,7 @@ class Test():
         plt.close(fig)
         pdf.close()
         self.discriminate(pearson,inp_name,ter_name)
-        self.discriminate(pearson_peo,inp_name,ter_name+"ACC_GENE")
+
         
         
 
@@ -271,7 +270,7 @@ class Test():
         r_c0 = np.array(r_c0)
         a,b,c,d,e,f,h = self.model.predict([l_tc,r_c0 ])
         #y = d.tolist()
-        #f = self.transformation.inv_trans(f)# use if i reduce the dimention of data
+        f = self.transformation.inv_trans(f)# use if i reduce the dimention of data
         self.gengraph_bigdata(f,self.real_rc ,'RIght','Predicted_right')
         
 

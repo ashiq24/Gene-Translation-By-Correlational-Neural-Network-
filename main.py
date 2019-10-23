@@ -72,7 +72,7 @@ def cmp_copula2():
     test.test_RtoL()
 
 if __name__ == "__main__":
-    data = RealData('/media/ashiq/Education/Research/DeepSavior/DATA Base/gtex6/gtex-Muscle-WholeBlood/original/Data/')
+    data = RealData('G:\\Research\\DeepSavior\\DATA Base\\gtex6\\gtex-skin-wholeblood\\original\\Data\\',20)
     
     lc,rc = data.get_data()
     mer_data = np.concatenate([lc,rc],axis=1)
@@ -91,14 +91,14 @@ if __name__ == "__main__":
     model = models.getModel()
     d = np.concatenate([lc[:tnum],rc[:tnum]],axis=1)
     cop = Copula(d)
-    '''sim_data = cop.gendata(10*tnum)
+    sim_data = cop.gendata(10*tnum)
     sim_data = np.array(sim_data)
     l_sim = sim_data[:,0:model_dim]
     r_sim = sim_data[:,model_dim:]
     left = np.concatenate([lc[:tnum],l_sim],axis=0)
     right = np.concatenate([rc[:tnum],r_sim],axis=0)
     left = left.tolist()
-    right = right.tolist()'''
+    right = right.tolist()
     left = lc[:tnum]
     right = rc[:tnum]
 
@@ -119,10 +119,10 @@ if __name__ == "__main__":
     lu_=[]
     ru=[]
     cov_mat=cop.cov
-    fig, ax = plt.subplots(figsize=(50, 50),nrows=1, ncols=1)
-    ax.imshow(cov_mat, cmap='binary', interpolation='nearest')
-    fig.savefig('copula_test.png')
-    training.train(left,right,val_left,val_right,300,30,model)
+    #fig, ax = plt.subplots(figsize=(50, 50),nrows=1, ncols=1)
+    #ax.imshow(cov_mat, cmap='binary', interpolation='nearest')
+    #fig.savefig('copula_test.png')
+    training.train(left,right,val_left,val_right,50,30,model)
     
     test = Test(data.Common,data.Cleft[tnum:],data.Cright[tnum:],test_left,test_right,lu,ru_,lu_,ru,cov_mat,2, model)
     test.test_LtoR()
