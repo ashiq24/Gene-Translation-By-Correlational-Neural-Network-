@@ -7,7 +7,10 @@ from keras import backend as K
 from metric import Test,copula_cmp
 import numpy.linalg
 import loss
+import sys
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
 plt.rcParams.update({'font.size': 22})
 def cmp_copula():
     models = m.Models(30,30,20,20,15,'selu',10)
@@ -71,36 +74,57 @@ def cmp_copula2():
     test.test_LtoR()
     test.test_RtoL()
 
+
+
 if __name__ == "__main__":
-    data = RealData('G:\\Research\\DeepSavior\\DATA Base\\gtex6\\gtex-skin-wholeblood\\original\\Data\\',20)
+    filepath = sys.argv[1]
+    pca_com = int(sys.argv[2])
+    copula_num = int(sys.argv[3])
+    activation = sys.argv[4]
+    activation_last_layer = sys.argv[4]
+    train_op = int(sys.argv[6])
+    test_op = int(sys.argv[7])
+    lamda = float(sys.argv[8])
+
+    data = RealData(filepath,pca_com)
     
-    lc,rc = data.get_data()
+    lc,rc,lu,ru = data.get_data()
+
+    #suffeling the data
+    '''
     mer_data = np.concatenate([lc,rc],axis=1)
-    #np.random.seed(100)
-    #np.random.shuffle(mer_data)
+    np.random.seed(100)
+    np.random.shuffle(mer_data)
+    
     lc = mer_data[:,:len(lc[0])]
     rc = mer_data[:,len(lc[0]):]
-    
+    '''
     num = len(lc)
-    tnum = int(num*0.8)
-    val = int(num*0.2)
+    tnum = int(num*0.7)
+    test = int(num*0.3)
+    print("training", tnum," testing", test)
 
     model_dim = len(lc[0])
     print(num,model_dim)
-    models = m.Models(model_dim, model_dim, int(model_dim/1), int(model_dim/1.2), int(model_dim/1.5), 'selu', .0001)
+    '''
+    Models(1st_layer_left, 1st_layer_right, 2nd_layer, 3rd_layer, common_layer)
+    '''
+    models = m.Models(model_dim, model_dim, int(model_dim/1), int(model_dim/1.2), int(model_dim/1.5), activation,activation_last_layer, lamda)
     model = models.getModel()
-    d = np.concatenate([lc[:tnum],rc[:tnum]],axis=1)
-    cop = Copula(d)
-    sim_data = cop.gendata(10*tnum)
-    sim_data = np.array(sim_data)
-    l_sim = sim_data[:,0:model_dim]
-    r_sim = sim_data[:,model_dim:]
-    left = np.concatenate([lc[:tnum],l_sim],axis=0)
-    right = np.concatenate([rc[:tnum],r_sim],axis=0)
-    left = left.tolist()
-    right = right.tolist()
-    left = lc[:tnum]
-    right = rc[:tnum]
+    if(copula_num>0):
+        d = np.concatenate([lc[:tnum],rc[:tnum]],axis=1)
+        cop = Copula(d)
+        sim_data = cop.gendata(copula_num)
+        sim_data = np.array(sim_data)
+        l_sim = sim_data[:,0:model_dim]
+        r_sim = sim_data[:,model_dim:]
+        left = np.concatenate([lc[:tnum],l_sim],axis=0)
+        right = np.concatenate([rc[:tnum],r_sim],axis=0)
+        left = left.tolist()
+        right = right.tolist()
+    else:
+        left = lc[:tnum]
+        right = rc[:tnum]
 
     train_val_split = int(len(left)*0.7)
     val_left = left[train_val_split:]
@@ -113,20 +137,28 @@ if __name__ == "__main__":
     test_right = rc[tnum:]
     print(len(val_left), len(val_left[0]))
     print(len(test_left), len(test_left[0]))
-    #training.train_2(left,right,lu[:70],ru[:70],val_left,val_right,10,30,model)
-    lu=[]
+    '''
+    train(train_left, train_right, val_left, val_right, epochs, batch_size, model)
+    '''
+    if(train_op==1):
+        training.train(left,right,val_left,val_right,300,30,model)
+    else:
+        training.train_2(left,right,lu,ru,val_left,val_right,10,30,model)
+
     ru_=[]
     lu_=[]
-    ru=[]
-    cov_mat=cop.cov
+
+    cov_mat=None
     #fig, ax = plt.subplots(figsize=(50, 50),nrows=1, ncols=1)
     #ax.imshow(cov_mat, cmap='binary', interpolation='nearest')
     #fig.savefig('copula_test.png')
-    training.train(left,right,val_left,val_right,50,30,model)
     
-    test = Test(data.Common,data.Cleft[tnum:],data.Cright[tnum:],test_left,test_right,lu,ru_,lu_,ru,cov_mat,2, model)
-    test.test_LtoR()
-    #test.test_RtoL()
+    
+    test = Test(data.Transform,data.Cleft[tnum:],data.Cright[tnum:],test_left,test_right,lu,ru_,lu_,ru,cov_mat,2, model)
+    if test_op == 1:
+        test.test_LtoR()
+    else:
+        test.test_RtoL()
     '''test.test_U_LtoR()
     test.test_U_RtoL()'''
 

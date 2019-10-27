@@ -1,5 +1,5 @@
 import numpy as np
-from keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 import loss
 def train( X_train_l , X_train_r ,val_left, val_right, epoch,batch_size, model ):
@@ -39,7 +39,7 @@ def train_2(left_c, right_c, l_u, r_u,val_left,val_right, epoch,batch_size, mode
     val_right = np.array(val_right)
     checkpointer = ModelCheckpoint('model.h5', verbose=1, save_best_only=True)
     model.fit( [ L_c, R_c ], [L_c,L_c,L_c, R_c, R_c, R_c,np.ones((L_c.shape[0],L_c.shape[1]))],
-      batch_size=batch_size, epochs=epoch*25,
+      batch_size=batch_size, epochs=epoch,
                validation_data=([val_left,val_right],[val_left,val_left,val_left,val_right,val_right,val_right,np.ones((val_left.shape[0],val_left.shape[1]))]),
                 shuffle=True,
                   callbacks=[

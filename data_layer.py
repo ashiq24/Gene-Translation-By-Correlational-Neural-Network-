@@ -74,8 +74,8 @@ class Copula():
     def gendata(self,num):
         self.var = random.multivariate_normal([0 for i in range(len(self.cov[0]))], self.cov,num)
         self.cov = np.cov(self.var.T)
-        for i in range(len(self.cov[0])):
-          print(np.cov(self.var[:,i]),np.std(self.var[:,i]), np.cov(self.var[i,:]),math.sqrt(self.cov[i][i]) )
+        #for i in range(len(self.cov[0])):
+        #print(np.cov(self.var[:,i]),np.std(self.var[:,i]), np.cov(self.var[i,:]),math.sqrt(self.cov[i][i]) )
         #stds = [np.std(cop.var[:,j]) for j in range(len(self.cov[0]))]
         print(self.var.shape)
         for i in self.var:
@@ -88,9 +88,12 @@ class Copula():
 
 class transform():
     def __init__(self,num):
-        self.pca = []
-        self.std = []
-        self.pcas = []
+        self.pca_l = None
+        self.std_l = None
+        self.std2_l = None
+        self.pca_r = None
+        self.std_r = None
+        self.std2_r = None
         self.dim = num
 
     def fit_get(self,data):
@@ -107,36 +110,64 @@ class transform():
         ndata = ndata + 1
         return ndata
 
-    def fit_get_both(self,left,right):
-        mer_data = np.concatenate([left,right],axis=0)
-        self.std = StandardScaler()
-        self.std.fit(mer_data)
-        ndata = self.std.transform(mer_data)
-        self.pca = PCA(self.dim)
-        self.pca.fit(ndata)
-        ndata = self.pca.transform(ndata)
+    def fit_get_both(self,left,right, uleft, uright):
+        ndata = np.concatenate([left,right], axis=0)
+        self.std_l = StandardScaler(with_std=True)
+        self.std_l.fit(ndata)
+        ndata = self.std_l.transform(ndata)
+        self.pca_l = PCA(self.dim)
+        self.pca_l.fit(ndata)
+        ndata = self.pca_l.transform(ndata)
 
-        self.pcas = StandardScaler()
-        self.pcas.fit(ndata)
-        ndata = self.pcas.transform(ndata)
-        ndata = ndata +1
+        self.std2_l = StandardScaler()
+        self.std2_l.fit(ndata)
+        ndata = self.std2_l.transform(ndata)
+        #new_l = ndata +1
+        #right
+        ndata = np.concatenate([left,right], axis=0)
+        self.std_r = StandardScaler(with_std=True)
+        self.std_r.fit(ndata)
+        ndata = self.std_r.transform(ndata)
+        self.pca_r = PCA(self.dim)
+        self.pca_r.fit(ndata)
+        ndata = self.pca_r.transform(ndata)
 
-        return ndata[ :len(left), : ],ndata[ len(left): ,:]
-    def get_both(self,left,right):
-        left = self.std.transform(left)
-        left = self.pca.transform(left)
-        left = self.pcas.transform(left)
-        left = left + 1
+        self.std2_r = StandardScaler(with_std=True)
+        self.std2_r.fit(ndata)
+        ndata = self.std2_r.transform(ndata)
+        #new_r = ndata + 1
 
-        right = self.std.transform(right)
-        right = self.pca.transform(right)
-        right = self.pcas.transform(right)
-        right = right + 1
+        return None, None
 
-        return left,right
+    def get_both(self,left,right, Uleft, Uright):
+        T_left = self.std_l.transform(left)
+        T_left = self.pca_l.transform(T_left)
+        T_left = self.std2_l.transform(T_left)
+        #T_left = T_left
 
-    def inv_trans(self, tdata):
-        return self.std.inverse_transform(self.pca.inverse_transform(self.pcas.inverse_transform(tdata-1)))
+        T_right = self.std_r.transform(right)
+        T_right = self.pca_r.transform(T_right)
+        T_right = self.std2_r.transform(T_right)
+        #T_right = T_right
+
+        T_Uleft = self.std_l.transform(Uleft)
+        T_Uleft = self.pca_l.transform(T_Uleft)
+        T_Uleft = self.std2_l.transform(T_Uleft)
+        #T_Uleft = T_Uleft
+
+        T_Uright = self.std_r.transform(Uright)
+        T_Uright = self.pca_r.transform(T_Uright)
+        T_Uright = self.std2_r.transform(T_Uright)
+        #T_Uright = T_Uright
+
+        return T_left, T_right, T_Uleft, T_Uright
+
+    def inv_trans_left(self, T_left):
+        #return self.std_l.inverse_transform(self.pca_l.inverse_transform(T_left))
+        return self.std_l.inverse_transform(self.pca_l.inverse_transform(self.std2_l.inverse_transform(T_left)))
+    def inv_trans_right(self, T_right):
+        #return self.std_r.inverse_transform(self.pca_r.inverse_transform(T_right))
+        return self.std_r.inverse_transform(self.pca_r.inverse_transform(self.std2_r.inverse_transform(T_right)))
 
 
 class RealData():
@@ -147,7 +178,7 @@ class RealData():
         self.Uleft = []
         self.Uright = []
         self.path = path
-        self.Common = transform(Reduced_dim)
+        self.Transform = transform(Reduced_dim)
         
         
 
@@ -174,13 +205,13 @@ class RealData():
 
     def get_data(self,):
         self.load()
-        tnum = int(len(self.Cleft)*0.8)
-        tcl,tcr = self.Common.fit_get_both(self.Cleft[:tnum],self.Cright[:tnum])
-        tcl,tcr = self.Common.get_both(self.Cleft,self.Cright) 
-        return tcl.tolist(),tcr.tolist()
+        tnum = int(len(self.Cleft)*0.7)
+        tcl,tcr = self.Transform.fit_get_both(self.Cleft[:tnum],self.Cright[:tnum],self.Uleft, self.Uright)
+        tcl,tcr,tul,tur = self.Transform.get_both(self.Cleft,self.Cright,self.Uleft,self.Uright)
+        return tcl.tolist(),tcr.tolist(), tul.tolist(), tur.tolist()
     
 def test_copula_2():
-    Data = RealData('/media/ashiq/Education/Research/DeepSavior/DATA Base/gtex6/gtex-adipose-skin/original/Data/')
+    Data = RealData('E:\\Data')
     lc,rc = Data.get_data()
     data = np.concatenate([lc,rc],axis=1)
     cop = Copula(data)
@@ -201,26 +232,7 @@ def test_copula_2():
     t = Test([],[],[],[],[],[],data,[],[])
     
     t.gengraph(data, pdata,'data','gen_data')
-#test_copula_2()
-'''data = [
-    [1,2,3],
-    [1.3,2.7,3.9],
-    [.5,2.9,2.8],
-    [3,1,2]
-]   
-print(data)
-sdt = StandardScaler()
-sdt.fit(data)
-ndata = sdt.transform(data)
 
-pca = PCA(1)
-pca.fit(ndata)
-pndata = pca.transform(ndata)
-print(pndata)
-
-pndata = pca.inverse_transform(pndata)
-ndata = sdt.inverse_transform(pndata)
-print(ndata)'''
 
 
 

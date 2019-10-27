@@ -1,15 +1,18 @@
-from keras import  Model
-from keras.layers import Input,Dense,concatenate,BatchNormalization,Dropout,Add
-from keras import backend as K,activations
+from tensorflow.keras import  Model
+from tensorflow.keras.layers import Input,Dense,concatenate,BatchNormalization,Dropout,Add
+from tensorflow.keras import backend as K,activations
 from tensorflow import Tensor as T
-from keras.engine.topology import Layer
+from tensorflow.python.keras.layers import Layer
 import numpy as np
 
+
 import loss
-hdim_deep=10
-hdim_deep2=20
-commonx=10
-commony=10
+#hdim_deep=10
+#hdim_deep2=20
+commonx= None
+commony = None
+def gaussian(x):
+    return 2*K.exp(-1*K.pow(x,2))+x
 class ZeroPadding(Layer):
      def __init__(self, **kwargs):
           super(ZeroPadding, self).__init__(**kwargs)
@@ -53,14 +56,19 @@ def corr_loss(y_true, y_pred):
 
 class Models:
 
-          def __init__(self, dim_lef, dim_rig, layer1, layer2, common, nonlin, lamda):
+          def __init__(self, dim_lef, dim_rig, layer1, layer2, common, nonlin,last_layer_act, lamda):
+               global commonx
+               global commony
                self.inputDimx = dim_lef
                self.inputDimy = dim_rig
                self.hdim_deep = layer1
                self.hdim_deep2 = layer2
                self.dim_common = common
+               commonx = common
+               commony = common
                self.Loss = loss.mylosses(lamda,dim_lef)
                self.nonlin = nonlin
+               self.last_layer_act = last_layer_act
                self.lamda = lamda
                
 
@@ -76,7 +84,7 @@ class Models:
                hl = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_l2')(hl)
                #hl = Dropout(0.3)(hl)
                #hl = BatchNormalization()(hl)
-               hl = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_l1')(hl)
+               #hl = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_l1')(hl)
                #hl = BatchNormalization()(hl)
                hl = Dense(self.dim_common, activation=self.nonlin,name='hid_l')(hl)
                #hl = BatchNormalization()(hl)
@@ -87,7 +95,7 @@ class Models:
                #hr = BatchNormalization()(hr)
                hr = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_r2')(hr)
                #hr = BatchNormalization()(hr)
-               hr = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_r1')(hr)
+               #hr = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_r1')(hr)
                #hr = Dropout(0.3)(hr)
                #hr = BatchNormalization()(hr)
                hr = Dense(self.dim_common, activation=self.nonlin,name='hid_r')(hr)
@@ -102,20 +110,20 @@ class Models:
                #recx = BatchNormalization()(recx)
                recx = Dense(self.hdim_deep2,activation=self.nonlin)(recx)
                #recx = BatchNormalization()(recx)
-               recx = Dense(self.hdim_deep,activation=self.nonlin)(recx)
+               #recx = Dense(self.hdim_deep,activation=gaussian)(recx)
                #recx = Dropout(0.3)(recx)
                #recx = BatchNormalization()(recx)
-               recx = Dense(self.inputDimx,activation='linear')(recx)
+               recx = Dense(self.inputDimx,activation=self.last_layer_act)(recx)
                #
                recy = Dense(self.hdim_deep2,activation=self.nonlin)(h)
                #recy = Dropout(0.3)(recy)
                #recy = BatchNormalization()(recy)
                recy = Dense(self.hdim_deep2,activation=self.nonlin)(recy)
                #recy = BatchNormalization()(recy) 
-               recy = Dense(self.hdim_deep,activation=self.nonlin)(recy)
+               #recy = Dense(self.hdim_deep,activation=gaussian)(recy)
                #recy = Dropout(0.3)(recy)
                #recy = BatchNormalization()(recy)
-               recy = Dense(self.inputDimy,activation='linear')(recy)
+               recy = Dense(self.inputDimy,activation=self.last_layer_act)(recy)
                #bhout = concatenate([recx,recy,h])
 
                branchModel = Model( [inpx,inpy],[recx,recy,h])
