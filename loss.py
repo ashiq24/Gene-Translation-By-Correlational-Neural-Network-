@@ -14,6 +14,7 @@ class mylosses():
     def correlationLoss(self, fake, H):
         y1 = H[:,:model.commonx]
         y2 = H[:,model.commonx:2*model.commonx]
+
         left = H[:,2*model.commonx:2*model.commonx+self.dim]
         right = H[:,2*model.commonx+self.dim:]
         y1_mean = K.mean(y1, axis=0)
@@ -27,7 +28,7 @@ class mylosses():
         corr = corr_nr / corr_dr
         function_to_map = lambda x: (1-x)*(1-x)  # Where `f` instantiates myCustomOp.
         corr = tf.map_fn(function_to_map, corr)
-        return K.sum(corr) * self.Lambda
+        return (K.sum(corr) )* self.Lambda
 
     def square_loss(self, y_true, y_pred):
         error = ls.mean_squared_error(y_true,y_pred)

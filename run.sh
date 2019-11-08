@@ -4,4 +4,4 @@
 #test_op = 1 test left to right generation
 #test_op = 2 test right to left generation
 #lambda is corrnet hyperparameter, adust between MSE and Correlation
-python3 main.py /media/ashiq/Education/Research/DeepSavior/DATA\ Base/gtex6/gtex-adipose-skin/original/Data/ 20 100 selu linear 1 2 30
+python3 main.py /media/ashiq/Education/Research/DeepSavior/DATA\ Base/gtex6/gtex-adipose-skin/original/Data/ 20 100 selu linear 1 2 3

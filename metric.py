@@ -39,7 +39,7 @@ class Test():
         plt.title("Features Check")
         fig.savefig(inp_name+' to '+ter_name+'.jpg')
     def gengraph_bigdata(self,pred, target, inp_name, ter_name):
-        pdf = mpdf.PdfPages(inp_name+" to "+ter_name+'.pdf')
+        pdf = mpdf.PdfPages(inp_name+"  "+ter_name+'.pdf')
         pearson_peo = []
         square_error_peo = []
 
@@ -119,6 +119,7 @@ class Test():
         ax.boxplot(dum,patch_artist=True)
         ax.set_xticklabels(labels=['pearson','spearman','pearson_acc_Gene','Ks_test'],
                     rotation=45, fontsize=10)
+        #ax.set_yticks([m/10 for m in range(-5,11,1)])
                     
         #ax[1].scatter( [i for i in range(len(Ks_test))],Ks_test)
         pdf.savefig(fig)
@@ -127,7 +128,7 @@ class Test():
         #self.discriminate(pearson,inp_name,ter_name)
         #self.discriminate(pearson_peo,inp_name,ter_name+"ACC_GENE")   
     def gengraph(self,pred, target, inp_name, ter_name):
-        pdf = mpdf.PdfPages(inp_name+" to "+ter_name+' PCA.pdf')
+        pdf = mpdf.PdfPages(inp_name+" "+ter_name+'.pdf')
         fig, ax = plt.subplots(figsize=(30, 20),nrows=1, ncols=1,sharey=True)
         ax.set_xlabel('features')
         ax.set_ylabel("expression level")
@@ -286,21 +287,30 @@ class Test():
         r_c0 = np.array(r_c0, dtype =np.float)
         a,b,c,d,e,f,h = self.model.predict([l_tc,r_c0 ])
         #y = d.tolist()
-        self.gengraph(f,self.r_c ,'Right','Predicted_right')
+        self.gengraph(f,self.r_c ,'Right PCA vs','Predicted_right_PCA')
         f = self.transformation.inv_trans_right(f)# use if i reduce the dimention of data
-        self.gengraph_bigdata(f,self.real_rc ,'Right','Predicted_right')
-        self.gengraph_bigdata(self.transformation.inv_trans_right(self.r_c),self.real_rc ,'Right','From_PCA_right')
+        self.gengraph_bigdata(f,self.real_rc ,'Right vs','Predicted_right')
+        self.gengraph_bigdata(self.transformation.inv_trans_right(self.r_c),self.real_rc ,'Right','vs REAL_PCA_right')
 
         
+    def test_LtoL(self):
+        l_c0 = [[0 for i in range(len(self.r_c[0]))] for j in range(len(self.r_c))]
+        l_tc = np.array(self.l_c)
+        l_c0 = np.array(l_c0, dtype=np.float)
+        a, b, c, d, e, f, h = self.model.predict([l_tc, l_c0])
+        self.gengraph(a, self.l_c, 'Left_PCA', 'vs predicted_left_PCA-from left')
+        a = self.transformation.inv_trans_left(a)
+        self.gengraph_bigdata(a, self.real_lc, 'Left', 'vs predicted_left-from left')
+        self.gengraph_bigdata(self.transformation.inv_trans_left(self.l_c), self.real_lc, 'Left', 'vs REAL_pca_left')
 
     def test_RtoL(self):
         l_c0 = [[0 for i in range(len( self.r_c[0]) )] for j in range(len(self.r_c))]
         r_tc = np.array(self.r_c)
-        l_c0 = np.array(l_c0)
+        l_c0 = np.array(l_c0, dtype =np.float)
         a,b,c,d,e,f,h = self.model.predict([l_c0,r_tc ])
-        self.gengraph(b, self.l_c, 'Left', 'predicted_left')
+        self.gengraph(b, self.l_c, 'Left pca vs ', 'predicted_left_pca')
         b = self.transformation.inv_trans_left(b)
-        self.gengraph_bigdata(b,self.real_lc ,'Left','predicted_left')
+        self.gengraph_bigdata(b,self.real_lc ,'Left','vs predicted_left')
         self.gengraph_bigdata(self.transformation.inv_trans_left(self.l_c),self.real_lc ,'Left','From_pca_left')
 
     def test_U_RtoL(self):

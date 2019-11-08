@@ -111,7 +111,7 @@ class transform():
         return ndata
 
     def fit_get_both(self,left,right, uleft, uright):
-        ndata = np.concatenate([left,right], axis=0)
+        ndata = np.concatenate([left,uleft], axis=0)
         self.std_l = StandardScaler(with_std=True)
         self.std_l.fit(ndata)
         ndata = self.std_l.transform(ndata)
@@ -124,7 +124,7 @@ class transform():
         ndata = self.std2_l.transform(ndata)
         #new_l = ndata +1
         #right
-        ndata = np.concatenate([left,right], axis=0)
+        ndata = np.concatenate([right,uright], axis=0)
         self.std_r = StandardScaler(with_std=True)
         self.std_r.fit(ndata)
         ndata = self.std_r.transform(ndata)
@@ -142,32 +142,32 @@ class transform():
     def get_both(self,left,right, Uleft, Uright):
         T_left = self.std_l.transform(left)
         T_left = self.pca_l.transform(T_left)
-        T_left = self.std2_l.transform(T_left)
+        #T_left = self.std2_l.transform(T_left)
         #T_left = T_left
 
         T_right = self.std_r.transform(right)
         T_right = self.pca_r.transform(T_right)
-        T_right = self.std2_r.transform(T_right)
+        #T_right = self.std2_r.transform(T_right)
         #T_right = T_right
 
         T_Uleft = self.std_l.transform(Uleft)
         T_Uleft = self.pca_l.transform(T_Uleft)
-        T_Uleft = self.std2_l.transform(T_Uleft)
+        #T_Uleft = self.std2_l.transform(T_Uleft)
         #T_Uleft = T_Uleft
 
         T_Uright = self.std_r.transform(Uright)
         T_Uright = self.pca_r.transform(T_Uright)
-        T_Uright = self.std2_r.transform(T_Uright)
+        #T_Uright = self.std2_r.transform(T_Uright)
         #T_Uright = T_Uright
 
         return T_left, T_right, T_Uleft, T_Uright
 
     def inv_trans_left(self, T_left):
-        #return self.std_l.inverse_transform(self.pca_l.inverse_transform(T_left))
-        return self.std_l.inverse_transform(self.pca_l.inverse_transform(self.std2_l.inverse_transform(T_left)))
+        return self.std_l.inverse_transform(self.pca_l.inverse_transform(T_left))
+        #return self.std_l.inverse_transform(self.pca_l.inverse_transform(self.std2_l.inverse_transform(T_left)))
     def inv_trans_right(self, T_right):
-        #return self.std_r.inverse_transform(self.pca_r.inverse_transform(T_right))
-        return self.std_r.inverse_transform(self.pca_r.inverse_transform(self.std2_r.inverse_transform(T_right)))
+        return self.std_r.inverse_transform(self.pca_r.inverse_transform(T_right))
+        #return self.std_r.inverse_transform(self.pca_r.inverse_transform(self.std2_r.inverse_transform(T_right)))
 
 
 class RealData():

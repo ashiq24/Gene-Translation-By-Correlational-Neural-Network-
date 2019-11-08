@@ -12,7 +12,9 @@ import loss
 commonx= None
 commony = None
 def gaussian(x):
-    return 2*K.exp(-1*K.pow(x,2))+x
+     return  K.pow(x,3)
+    #return 2*K.exp(-1*K.pow(x,2))+x
+
 class ZeroPadding(Layer):
      def __init__(self, **kwargs):
           super(ZeroPadding, self).__init__(**kwargs)

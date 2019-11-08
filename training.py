@@ -31,7 +31,7 @@ def train_2(left_c, right_c, l_u, r_u,val_left,val_right, epoch,batch_size, mode
     l_u_dum = [[0 for i in range(len(r_u[0]))] for j in range(len(r_u))]
     l_u = np.array(l_u)
     r_u = np.array(r_u)
-    l_u_dum = np.array(l_u_dum)
+    l_u_dum = np.array(l_u_dum,)
     r_u_dum = np.array(r_u_dum)
     L_c = np.copy(l_c)
     R_c = np.copy(r_c)
@@ -48,7 +48,7 @@ def train_2(left_c, right_c, l_u, r_u,val_left,val_right, epoch,batch_size, mode
     model.load_weights('model.h5')
     for i  in range(5):
       model.fit( [ L_c, R_c ], [L_c,L_c,L_c, R_c, R_c, R_c,np.ones((L_c.shape[0],L_c.shape[1]))],
-      batch_size=batch_size, epochs=epoch,
+      batch_size=batch_size, epochs=int(epoch/5),
                validation_data=([val_left,val_right],[val_left,val_left,val_left,val_right,val_right,val_right,np.ones((val_left.shape[0],val_left.shape[1]))]),
                 shuffle=True,
                   callbacks=[
