@@ -7,7 +7,7 @@ def train( X_train_l , X_train_r ,val_left, val_right, epoch,batch_size, model )
     X_train_r = np.array(X_train_r)
     val_left = np.array(val_left)
     val_right = np.array(val_right)
-    checkpointer = ModelCheckpoint('model.h5', verbose=1, save_best_only=True)
+    checkpointer = ModelCheckpoint('model.h5', verbose=0, save_best_only=True)
     '''
     validation_data=([val_left,val_right],[val_left,val_left,val_left,val_right,val_right,val_right,np.ones((val_left.shape[0],val_left.shape[1]))]),
                 shuffle=True,
@@ -15,7 +15,7 @@ def train( X_train_l , X_train_r ,val_left, val_right, epoch,batch_size, model )
                   checkpointer,
               ]'''
     model.fit([X_train_l,X_train_r], [X_train_l,X_train_l,X_train_l,X_train_r,X_train_r,X_train_r,np.ones((X_train_l.shape[0],X_train_l.shape[1]))],
-               nb_epoch=epoch,batch_size=batch_size,verbose=1,
+               nb_epoch=epoch,batch_size=batch_size,verbose=0,
                validation_data=([val_left,val_right],[val_left,val_left,val_left,val_right,val_right,val_right,np.ones((val_left.shape[0],val_left.shape[1]))]),
                 shuffle=True,
                   callbacks=[

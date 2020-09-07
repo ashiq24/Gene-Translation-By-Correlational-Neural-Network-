@@ -18,19 +18,19 @@ def gaussian(x):
 class ZeroPadding(Layer):
      def __init__(self, **kwargs):
           super(ZeroPadding, self).__init__(**kwargs)
- 
+
      def call(self, x, mask=None):
           return K.zeros_like(x)
- 
+
      def get_output_shape_for(self, input_shape):
           return input_shape
- 
+
 class CorrnetCost(Layer):
      def __init__(self,lamda, **kwargs):
           super(CorrnetCost, self).__init__(**kwargs)
           self.lamda = lamda
      def cor(self,y1, y2,left,right, lamda):
-          
+
           y1_mean = K.mean(y1, axis=0)
           y1_centered = y1 - y1_mean
           y2_mean = K.mean(y2, axis=0)
@@ -42,7 +42,7 @@ class CorrnetCost(Layer):
           corr = corr_nr / corr_dr
 
           return K.sum(corr) * lamda
- 
+
      def call(self ,x ,mask=None):
           hx,hy, left, right=x[0], x[1], x[2], x[3]
           corr = self.cor(hx,hy,left,right,self.lamda)
@@ -50,8 +50,8 @@ class CorrnetCost(Layer):
      def get_output_shape_for(self, input_shape):
         print(input_shape[0][0])
         return (input_shape[0][0],input_shape[0][1])
-    
- 
+
+
 def corr_loss(y_true, y_pred):
         return y_pred
         #return tf.fill(y_pred.get_shape(), 9.9)
@@ -72,7 +72,7 @@ class Models:
                self.nonlin = nonlin
                self.last_layer_act = last_layer_act
                self.lamda = lamda
-               
+
 
 
           def getModel(self):
@@ -101,7 +101,7 @@ class Models:
                #hr = Dropout(0.3)(hr)
                #hr = BatchNormalization()(hr)
                hr = Dense(self.dim_common, activation=self.nonlin,name='hid_r')(hr)
-               #hr = BatchNormalization()(hr) 
+               #hr = BatchNormalization()(hr)
 
 
                h =  Add()([hl,hr])
@@ -121,7 +121,7 @@ class Models:
                #recy = Dropout(0.3)(recy)
                #recy = BatchNormalization()(recy)
                recy = Dense(self.hdim_deep2,activation=self.nonlin)(recy)
-               #recy = BatchNormalization()(recy) 
+               #recy = BatchNormalization()(recy)
                #recy = Dense(self.hdim_deep,activation=gaussian)(recy)
                #recy = Dropout(0.3)(recy)
                #recy = BatchNormalization()(recy)
@@ -140,15 +140,17 @@ class Models:
 
                #corr = CorrnetCost(-0.20)([h1,h2,inpx, inpy])
                H= concatenate([h1,h2,inpx,inpy])
+               sml =  Model( [inpx,inpy],recx)
+               smr = Model( [inpx,inpy],recy)
 
                model = Model( [inpx,inpy],[recx1,recx2,recx3,recy1,recy2,recy3,H])
-               model.compile( loss=[self.Loss.square_loss, self.Loss.square_loss, 
+               model.compile( loss=[self.Loss.square_loss, self.Loss.square_loss,
                self.Loss.square_loss,
                self.Loss.square_loss,self.Loss.square_loss,
                self.Loss.square_loss,self.Loss.correlationLoss],optimizer="adam")
-               model.summary()
-               return model
-          
+               #model.summary()
+               return model, sml, smr
+
           def getModel_2(self):
                inpx = Input(shape=(self.inputDimx,))
                inpy = Input(shape=(self.inputDimy,))
@@ -161,7 +163,7 @@ class Models:
 
                hr = Dense(self.hdim_deep,activation=self.nonlin)(inpy)
                hr = Dense(self.hdim_deep2, activation=self.nonlin,name='hid_r1')(hr)
-               hr = Dense(self.dim_common, activation=self.nonlin,name='hid_r')(hr) 
+               hr = Dense(self.dim_common, activation=self.nonlin,name='hid_r')(hr)
 
 
                h =  Merge(mode="sum")([hl,hr])
@@ -171,7 +173,7 @@ class Models:
                recx = Dense(self.hdim_deep,activation=self.nonlin)(h)
                recx = Dense(self.inputDimx,activation='selu')(h)
                #
-               recy = Dense(self.hdim_deep2,activation=self.nonlin)(h) 
+               recy = Dense(self.hdim_deep2,activation=self.nonlin)(h)
                recy = Dense(self.hdim_deep,activation=self.nonlin)(h)
                recy = Dense(self.inputDimy,activation='selu')(h)
                #bhout = concatenate([recx,recy,h])
@@ -190,10 +192,9 @@ class Models:
                #H= concatenate([h1,h2,inpx,inpy])
 
                model = Model( [inpx,inpy],[recx1,recx2,recx3,recy1,recy2,recy3,corr])
-               model.compile( loss=[self.Loss.square_loss, self.Loss.square_loss, 
+               model.compile( loss=[self.Loss.square_loss, self.Loss.square_loss,
                self.Loss.square_loss,
                self.Loss.square_loss,self.Loss.square_loss,
                self.Loss.square_loss,corr_loss],optimizer="adam")
-               model.summary()
+               #model.summary()
                return model
-               

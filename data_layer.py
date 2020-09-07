@@ -15,7 +15,7 @@ class DATA():
     def get_covmat(self):
         return datasets.make_spd_matrix(2*self.feachers)
         #return datasets.make_spd_matrix(2*self.feachers,random_state=100)
-    
+
 
     def get_means(self):
         means = []
@@ -33,31 +33,31 @@ class DATA():
         mean_vec2 = self.get_means()
         data_bulk_2 = random.multivariate_normal(mean_vec2,cov_mat,total-int(total/2))
         data_bulk = np.concatenate([data_bulk,data_bulk_2],axis=0)
-        
+
         mean_vec1 = mean_vec1.reshape( (1,len(mean_vec1)))
         mean_vec2 = mean_vec2.reshape( (1,len(mean_vec2)))
-       
+
 
         cov_mat = cov_mat + (0.5*np.matmul(mean_vec1.T,mean_vec1)+0.5*np.matmul(mean_vec2.T,mean_vec2)) - np.matmul((0.5*mean_vec1+0.5*mean_vec2).T,(0.5*mean_vec1+0.5*mean_vec2))
-        
+
         print(len(data_bulk), len(data_bulk[0]))
         random.shuffle(data_bulk)
         #plt.boxplot(data_bulk)
-       
+
         l_com = [i[:self.feachers] for i in data_bulk[:common]]
         r_com = [i[self.feachers:] for i in data_bulk[:common]]
         l_u = [i[:self.feachers] for i in data_bulk[common:common+l_unique]]
         r_u_ = [i[self.feachers:] for i in data_bulk[common:common+l_unique]]
         l_u_ = [i[:self.feachers] for i in data_bulk[len(data_bulk)-r_unique:]]
         r_u = [i[self.feachers:] for i in data_bulk[len(data_bulk)-r_unique:]]
-        
+
         df = pd.DataFrame(l_com, columns=[str(i) for i in range(self.feachers)] )
         df.plot.box(patch_artist=True)
         plt.savefig('leftinput_com.jpg')
         df1 = pd.DataFrame(r_com, columns=[str(i) for i in range(self.feachers)] )
         df1.plot.box(patch_artist=True)
         plt.savefig('rightinput_com.jpg')
-        
+
         return l_com,r_com,l_u,r_u_,l_u_,r_u,cov_mat
 class Copula():
     def __init__(self,data):
@@ -115,9 +115,10 @@ class transform():
         self.std_l = StandardScaler(with_std=True)
         self.std_l.fit(ndata)
         ndata = self.std_l.transform(ndata)
-        self.pca_l = PCA(self.dim)
-        self.pca_l.fit(ndata)
-        ndata = self.pca_l.transform(ndata)
+        if self.dim != -1:
+            self.pca_l = PCA(self.dim)
+            self.pca_l.fit(ndata)
+            ndata = self.pca_l.transform(ndata)
 
         self.std2_l = StandardScaler()
         self.std2_l.fit(ndata)
@@ -128,9 +129,10 @@ class transform():
         self.std_r = StandardScaler(with_std=True)
         self.std_r.fit(ndata)
         ndata = self.std_r.transform(ndata)
-        self.pca_r = PCA(self.dim)
-        self.pca_r.fit(ndata)
-        ndata = self.pca_r.transform(ndata)
+        if self.dim != -1:
+            self.pca_r = PCA(self.dim)
+            self.pca_r.fit(ndata)
+            ndata = self.pca_r.transform(ndata)
 
         self.std2_r = StandardScaler(with_std=True)
         self.std2_r.fit(ndata)
@@ -141,33 +143,39 @@ class transform():
 
     def get_both(self,left,right, Uleft, Uright):
         T_left = self.std_l.transform(left)
-        T_left = self.pca_l.transform(T_left)
+        if self.dim != -1:
+            T_left = self.pca_l.transform(T_left)
         #T_left = self.std2_l.transform(T_left)
         #T_left = T_left
 
         T_right = self.std_r.transform(right)
-        T_right = self.pca_r.transform(T_right)
+        if self.dim != -1:
+            T_right = self.pca_r.transform(T_right)
         #T_right = self.std2_r.transform(T_right)
         #T_right = T_right
 
         T_Uleft = self.std_l.transform(Uleft)
-        T_Uleft = self.pca_l.transform(T_Uleft)
+        if self.dim != -1:
+            T_Uleft = self.pca_l.transform(T_Uleft)
         #T_Uleft = self.std2_l.transform(T_Uleft)
         #T_Uleft = T_Uleft
 
         T_Uright = self.std_r.transform(Uright)
-        T_Uright = self.pca_r.transform(T_Uright)
+        if self.dim != -1:
+            T_Uright = self.pca_r.transform(T_Uright)
         #T_Uright = self.std2_r.transform(T_Uright)
         #T_Uright = T_Uright
 
         return T_left, T_right, T_Uleft, T_Uright
 
     def inv_trans_left(self, T_left):
-        return self.std_l.inverse_transform(self.pca_l.inverse_transform(T_left))
-        #return self.std_l.inverse_transform(self.pca_l.inverse_transform(self.std2_l.inverse_transform(T_left)))
+        if self.dim != -1:
+            return self.std_l.inverse_transform(self.pca_l.inverse_transform(T_left))
+        return self.std_l.inverse_transform(T_left)
     def inv_trans_right(self, T_right):
-        return self.std_r.inverse_transform(self.pca_r.inverse_transform(T_right))
-        #return self.std_r.inverse_transform(self.pca_r.inverse_transform(self.std2_r.inverse_transform(T_right)))
+        if self.dim != -1:
+            return self.std_r.inverse_transform(self.pca_r.inverse_transform(T_right))
+        return self.std_r.inverse_transform(T_right)
 
 
 class RealData():
@@ -177,28 +185,53 @@ class RealData():
         self.Cright = []
         self.Uleft = []
         self.Uright = []
+        self.left_gene = None
+        self.right_gene = None
         self.path = path
         self.Transform = transform(Reduced_dim)
-        
-        
+
+
 
     def load(self):
+        #new code for new gtex file
+        '''data = pd.read_csv(self.path + 'original_same-exp_cl.txt', sep=' ')
+        data = data.drop(columns=['Unnamed: 0'])
+        self.Cleft = data.values
+        data = pd.read_csv(self.path + 'original_same-exp_cr.txt', sep=' ')
+        data = data.drop(columns=['Unnamed: 0'])
+        self.Cright = data.values
+        data = pd.read_csv(self.path + 'original_same-exp_ul.txt', sep=' ')
+        data = data.drop(columns=['Unnamed: 0'])
+        self.Uleft = data.values
+        data = pd.read_csv(self.path + 'original_same-exp_ur.txt', sep=' ')
+        data = data.drop(columns=['Unnamed: 0'])
+        self.Uright = data.values'''
+
+
         data = pd.read_csv(self.path+'exps_CommonLeft.csv')
         data = data.drop(columns=['Unnamed: 0'])
         self.Cleft = data.values
+        self.left_gene = data.columns
+
         data = pd.read_csv(self.path+'exps_commonRight.csv')
         data = data.drop(columns=['Unnamed: 0'])
         self.Cright = data.values
+        self.right_gene = data.columns
 
-        '''mer_data = np.concatenate([self.Cleft,self.Cright],axis=1)
-        np.random.seed(100)
+        '''
+        mer_data = np.concatenate([self.Cleft,self.Cright],axis=1)
+        np.random.seed(10190)
+        mer_data = mer_data.T
         np.random.shuffle(mer_data)
+        mer_data = mer_data.T
         self.Cleft = mer_data[:,:len(self.Cleft[0])]
         self.Cright = mer_data[:,len(self.Cleft[0]):]'''
+
 
         data = pd.read_csv(self.path+'exps_UniqLeft.csv')
         data = data.drop(columns=['Unnamed: 0'])
         self.Uleft = data.values
+
         data = pd.read_csv(self.path+'exps_UniqRight.csv')
         data = data.drop(columns=['Unnamed: 0'])
         self.Uright = data.values
@@ -209,7 +242,7 @@ class RealData():
         tcl,tcr = self.Transform.fit_get_both(self.Cleft[:tnum],self.Cright[:tnum],self.Uleft, self.Uright)
         tcl,tcr,tul,tur = self.Transform.get_both(self.Cleft,self.Cright,self.Uleft,self.Uright)
         return tcl.tolist(),tcr.tolist(), tul.tolist(), tur.tolist()
-    
+
 def test_copula_2():
     Data = RealData('E:\\Data')
     lc,rc = Data.get_data()
@@ -230,9 +263,5 @@ def test_copula_2():
     from metric import Test
 
     t = Test([],[],[],[],[],[],data,[],[])
-    
+
     t.gengraph(data, pdata,'data','gen_data')
-
-
-
-

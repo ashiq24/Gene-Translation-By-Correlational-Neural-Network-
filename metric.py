@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde, spearmanr, pearsonr, ks_2samp
 import matplotlib.backends.backend_pdf as mpdf
 import pickle
-
-plt.rcParams.update({'font.size': 22})
+import pandas as pd
+plt.rcParams.update({'font.size': 10})
 lowdata = []
 moredata = []
 class Test():
@@ -38,6 +38,8 @@ class Test():
         plt.ylabel("cov_sum ")
         plt.title("Features Check")
         fig.savefig(inp_name+' to '+ter_name+'.jpg')
+
+
     def gengraph_bigdata(self,pred, target, inp_name, ter_name):
         pdf = mpdf.PdfPages(inp_name+"  "+ter_name+'.pdf')
         pearson_peo = []
@@ -70,7 +72,7 @@ class Test():
             Ks_test.append( ks )
             #
         fig, ax = plt.subplots(figsize=(25, 10),nrows=1, ncols=1,sharey=True)
-        #plt.show()
+        #
         pearson = np.array(pearson)
         pearson = pearson[~np.isnan(pearson)]
         pearson = pearson.tolist()
@@ -117,14 +119,14 @@ class Test():
         dum = np.array(dum)
         dum = dum.T
         ax.boxplot(dum,patch_artist=True)
-        ax.set_xticklabels(labels=['pearson','spearman','pearson_acc_Gene','Ks_test'],
-                    rotation=45, fontsize=10)
-        #ax.set_yticks([m/10 for m in range(-5,11,1)])
-                    
+        ax.set_xticklabels(labels=['pearson','spearman','pearson_acc_Gene','Ks_test'], rotation=45, fontsize=10)
+        ax.set_yticks([m/10 for m in range(-5,11,1)])
+        plt.show()  
         #ax[1].scatter( [i for i in range(len(Ks_test))],Ks_test)
-        pdf.savefig(fig)
-        plt.close(fig)
-        pdf.close()
+        #pdf.savefig(fig)
+        #plt.close(fig)
+        #pdf.close()
+        return pearson, spearman, Ks_test, square_error
         #self.discriminate(pearson,inp_name,ter_name)
         #self.discriminate(pearson_peo,inp_name,ter_name+"ACC_GENE")   
     def gengraph(self,pred, target, inp_name, ter_name):
@@ -271,11 +273,12 @@ class Test():
         ax.set_xticklabels(labels=[ 'MSE', 'MSE_acc_Gene'],
                            rotation=45, fontsize=15)
 
-        # ax[1].scatter( [i for i in range(len(Ks_test))],Ks_test)
+        ax[1].scatter( [i for i in range(len(Ks_test))],Ks_test)
         pdf.savefig(fig)
         plt.close(fig)
         pdf.close()
         #self.discriminate(pearson,inp_name,ter_name)
+        return pearson, spearman, Ks_test, square_error
 
         
         
@@ -287,10 +290,10 @@ class Test():
         r_c0 = np.array(r_c0, dtype =np.float)
         a,b,c,d,e,f,h = self.model.predict([l_tc,r_c0 ])
         #y = d.tolist()
-        self.gengraph(f,self.r_c ,'Right PCA vs','Predicted_right_PCA')
+        #self.gengraph(f,self.r_c ,'Right PCA vs','Predicted_right_PCA')
         f = self.transformation.inv_trans_right(f)# use if i reduce the dimention of data
-        self.gengraph_bigdata(f,self.real_rc ,'Right vs','Predicted_right')
-        self.gengraph_bigdata(self.transformation.inv_trans_right(self.r_c),self.real_rc ,'Right','vs REAL_PCA_right')
+        return self.gengraph_bigdata(f,self.real_rc ,'Right vs','Predicted_right')
+        #self.gengraph_bigdata(self.transformation.inv_trans_right(self.r_c),self.real_rc ,'Right','vs REAL_PCA_right')
 
         
     def test_LtoL(self):
@@ -298,20 +301,20 @@ class Test():
         l_tc = np.array(self.l_c)
         l_c0 = np.array(l_c0, dtype=np.float)
         a, b, c, d, e, f, h = self.model.predict([l_tc, l_c0])
-        self.gengraph(a, self.l_c, 'Left_PCA', 'vs predicted_left_PCA-from left')
+        #self.gengraph(a, self.l_c, 'Left_PCA', 'vs predicted_left_PCA-from left')
         a = self.transformation.inv_trans_left(a)
-        self.gengraph_bigdata(a, self.real_lc, 'Left', 'vs predicted_left-from left')
-        self.gengraph_bigdata(self.transformation.inv_trans_left(self.l_c), self.real_lc, 'Left', 'vs REAL_pca_left')
+        return self.gengraph_bigdata(a, self.real_lc, 'Left', 'vs predicted_left-from left')
+        #self.gengraph_bigdata(self.transformation.inv_trans_left(self.l_c), self.real_lc, 'Left', 'vs REAL_pca_left')
 
     def test_RtoL(self):
         l_c0 = [[0 for i in range(len( self.r_c[0]) )] for j in range(len(self.r_c))]
         r_tc = np.array(self.r_c)
         l_c0 = np.array(l_c0, dtype =np.float)
         a,b,c,d,e,f,h = self.model.predict([l_c0,r_tc ])
-        self.gengraph(b, self.l_c, 'Left pca vs ', 'predicted_left_pca')
+        #self.gengraph(b, self.l_c, 'Left pca vs ', 'predicted_left_pca')
         b = self.transformation.inv_trans_left(b)
         self.gengraph_bigdata(b,self.real_lc ,'Left','vs predicted_left')
-        self.gengraph_bigdata(self.transformation.inv_trans_left(self.l_c),self.real_lc ,'Left','From_pca_left')
+        #self.gengraph_bigdata(self.transformation.inv_trans_left(self.l_c),self.real_lc ,'Left','From_pca_left')
 
     def test_U_RtoL(self):
         l_u0 = [[0 for i in range(len( self.r_u[0]) )] for j in range(len(self.r_u))]
@@ -347,6 +350,21 @@ def copula_cmp():
                 rotation=45, fontsize=15)
     fig.savefig("copulatest.jpg")
         
+
+def boxplot(values, names, title):
+    '''values = [
+        [1,2,3,4,3,1,3,4,3,1,2,3,4,23,1,2,3],
+        [10, 20, 30, 40, 30, 10, 30, 40, 30, 1, 2, 37, 47, 23, 1, 2, 3],
+        [-1, -2, -4, -6, 0 , 1, 3 , 6 , 7, -9,10,11]
+    ]'''
+    values = np.array(values)
+    #name = ["a", "b", "c"]
+    plt.figure(figsize=(60, 20))
+    import seaborn as sns
+    ax = sns.boxplot(data = values, orient='v')
+    ax.set_xticklabels(labels=names,
+                    rotation=60, fontsize=18)
+    ax.get_figure().savefig(title+".png")
 
 
 
